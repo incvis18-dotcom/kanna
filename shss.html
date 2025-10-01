@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Happy Anniversary, My Love! ❤️</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Load Tone.js for typewriter sound generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
+    <!-- Configure Tailwind for custom colors/theme -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'romantic-pink': '#FFDADA', // Very light pink/cream
+                        'love-rose': '#E94E77',    // Deep rose/primary color
+                        'light-rose': '#FBCFE8',   // Light accent color
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    keyframes: {
+                        jiggle: {
+                            '0%, 100%': { transform: 'translateY(0) rotate(0deg)' },
+                            '50%': { transform: 'translateY(-5px) rotate(2deg)' },
+                        }
+                    },
+                    animation: {
+                        'jiggle': 'jiggle 0.5s ease-in-out infinite alternate',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* CRITICAL FIXES for 3D Flip */
+        #perspective-wrapper {
+            perspective: 1000px; /* Defines the 3D viewing context */
+        }
+        .card-container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d; /* Allows children to be positioned in 3D */
+            transition: transform 1.2s cubic-bezier(0.68, -0.55, 0.265, 1.55); /* Smoother, bouncier transition */
+            cursor: pointer;
+        }
+
+        .card-front, .card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden; /* Hides the back of the element when facing away */
+            border-radius: 1.5rem; /* rounded-3xl */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden; /* Ensures content doesn't leak */
+        }
+
+        /* Front face: initial state */
+        .card-front {
+            transform: rotateY(0deg);
+            z-index: 2;
+        }
+
+        /* Back face: initially hidden/rotated */
+        .card-back {
+            transform: rotateY(180deg);
+            z-index: 1; 
+            /* Note: We apply the 180deg rotation here, which is then counteracted
+               by the parent's flip, making it appear correctly. */
+        }
+
+        /* Flipped state */
+        .card-container.is-open {
+            transform: rotateY(180deg);
+            cursor: default;
+        }
+
+        /* Ribbon Styling */
+        .ribbon-v {
+            position: absolute;
+            width: 30px;
+            height: 100%;
+            background-color: var(--tw-colors-light-rose); 
+            z-index: 10;
+        }
+        .ribbon-h {
+            position: absolute;
+            width: 100%;
+            height: 30px;
+            background-color: var(--tw-colors-light-rose); 
+            z-index: 10;
+        }
+        .ribbon-center {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            background-color: var(--tw-colors-love-rose); 
+            border-radius: 50%;
+            z-index: 15;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Typewriter Effect CSS */
+        .typewriter-text {
+            color: transparent; /* Text is initially invisible */
+            padding-right: 5px; /* Space for the cursor */
+        }
+        .typewriter-cursor {
+            display: inline-block;
+            width: 3px;
+            height: 1.2em;
+            background-color: var(--tw-colors-love-rose);
+            animation: blink 1s step-end infinite;
+            margin-left: 2px;
+            vertical-align: middle;
+        }
+
+        @keyframes blink {
+            from, to { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+    </style>
+</head>
+<body class="font-sans min-h-screen flex items-center justify-center p-4 bg-romantic-pink">
+
+    <!-- Wrapper for 3D Perspective -->
+    <div id="perspective-wrapper" class="w-full max-w-md md:max-w-lg lg:max-w-xl h-96 shadow-2xl rounded-3xl">
+        <!-- Main Card Container (The Flippable Element) -->
+        <div id="cardContainer" class="card-container bg-romantic-pink rounded-3xl" onclick="openCard()">
+
+            <!-- CARD FRONT (Closed Gift Box) -->
+            <div class="card-front bg-love-rose/90 p-8">
+                <!-- Decorative Ribbons -->
+                <div class="ribbon-v left-1/2 -translate-x-1/2"></div>
+                <div class="ribbon-h top-1/2 -translate-y-1/2"></div>
+                <div class="ribbon-center top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"></div>
+
+                <div class="text-center relative z-20">
+                    <h1 class="text-3xl sm:text-4xl font-extrabold text-white mb-2">
+                        A Gift for My Love
+                    </h1>
+                    <p class="text-lg sm:text-xl text-light-rose/80 mb-6">
+                        Click the box to open your anniversary surprise!
+                    </p>
+                    <!-- Floating Heart Icon -->
+                    <div class="text-6xl text-white opacity-90 animate-jiggle">
+                        ❤️
+                    </div>
+                </div>
+            </div>
+
+            <!-- CARD BACK (The Letter Content) -->
+            <div id="cardBack" class="card-back bg-white p-6 sm:p-8 overflow-y-auto">
+                <div class="text-center mb-4 sm:mb-6">
+                    <h2 class="text-3xl font-extrabold text-love-rose">One Year of Us</h2>
+                    <p class="text-gray-500 text-sm">Happy Anniversary!</p>
+                </div>
+
+                <!-- Typewriter content area -->
+                <p id="letterContent" class="text-lg text-gray-700 leading-relaxed whitespace-pre-wrap typewriter-text text-left"></p>
+                
+                <!-- Boyfriend's Photo - Initially hidden and small, will fade in and grow -->
+                <div class="text-center">
+                    <img id="pinguImage" 
+                         src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQWkYZC7Ac-r7OYRqXpKcryMrd7G8aDiIy0PQ&s" 
+                         alt="Surprise Photo of Boyfriend" 
+                         class="mx-auto mt-6 w-30 h-30 rounded-full shadow-xl object-cover opacity-0 transform scale-50 transition-opacity transition-transform duration-1000 ease-out" 
+                         onerror="this.onerror=null;this.src='https://placehold.co/120x120/E94E77/FFFFFF?text=Photo+Error';" >
+                </div>
+
+
+                <div class="mt-8 pt-4 border-t border-romantic-pink text-right">
+                    <p class="text-xl font-medium text-love-rose">Forever Yours,</p>
+                    <p class="text-2xl font-bold text-love-rose">Your Kanna :></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Simple Message Box (Optional, retained for best practice) -->
+    <div id="messageBox" class="hidden fixed inset-0 bg-black bg-opacity-50 items-center justify-center p-4 z-50">
+        <div class="bg-white p-6 rounded-xl shadow-2xl max-w-sm text-center">
+            <p class="text-lg font-semibold text-gray-800 mb-4" id="messageText"></p>
+            <button onclick="hideMessageBox()" class="px-4 py-2 bg-love-rose text-white rounded-lg hover:bg-love-rose/80 transition">
+                Got It!
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Global Variables
+        const cardContainer = document.getElementById('cardContainer');
+        const cardBack = document.getElementById('cardBack');
+        const letterContentElement = document.getElementById('letterContent');
+        let isCardOpen = false;
+        
+        // Tone.js Synth setup for typewriter sound
+        let keySynth = null; 
+
+        // The letter content to be typed out (Customize this!)
+        const letterText = `
+ Ey Pandhi :>
+
+    Happy Anniversary :)))))
+     AAA I CANNOT BELIEVE ITS BEEN YEAR ALREADY :O I LOVE YOUUU
+     AND I PROMISE TO LOVE YOU MORE AND MORE EACH DAY :3,
+`; 
+        
+        /**
+         * Function to initialize audio context and synth.
+         * Creates a quieter, mechanical keyboard click sound.
+         */
+        function initAudio() {
+            // Check if audio is already initialized (important for user interaction requirements)
+            if (Tone.context.state !== 'running') {
+                Tone.start();
+            }
+
+            // 1. Create a Gain node to control volume, set to -18 dB (subtle background sound)
+            const gain = new Tone.Gain(Tone.dbToGain(-18)).toDestination(); 
+
+            // 2. Use a standard Synth with a square wave for a sharper, mechanical/digital click
+            keySynth = new Tone.Synth({ 
+                oscillator: { type: 'square' }, // Sharp square wave is perfect for 8-bit sounds
+                envelope: {
+                    attack: 0.005,
+                    decay: 0.02, // Very fast decay for a click
+                    sustain: 0,
+                    release: 0.01
+                }
+            }).connect(gain); // Connect the synth to the quiet gain node
+        }
+
+        // Function to play a single typewriter sound
+        function playTypeSound() {
+            if (keySynth) {
+                // Base frequency for a higher, more 'bleepy' game sound (700 Hz)
+                const baseFrequency = 700; 
+                // Variation of +/- 50 Hz for a randomized, slightly off-key effect
+                const randomVariation = (Math.random() - 0.5) * 100; 
+                const frequency = baseFrequency + randomVariation;
+
+                // Triggering the synth with the randomized frequency and a super short duration ('64n')
+                keySynth.triggerAttackRelease(frequency, '64n');
+            }
+        }
+
+        /**
+         * Reveals the Pingu image with a fade-in and scale-up effect.
+         */
+        function revealPingu() {
+            const pingu = document.getElementById('pinguImage');
+            if (pingu) {
+                // The transition classes are already on the element.
+                // We just add the final state classes to trigger the animation.
+                pingu.classList.remove('opacity-0', 'scale-50');
+                pingu.classList.add('opacity-100', 'scale-100');
+            }
+        }
+
+        /**
+         * Typewriter effect function.
+         */
+        function typeWriter(text, element, delay = 50) {
+            let i = 0;
+            // Add a cursor element
+            const cursor = document.createElement('span');
+            cursor.classList.add('typewriter-cursor');
+            element.insertAdjacentElement('afterend', cursor); // Insert after the element
+
+            // Make the text visible first, as the typewriter will overwrite it with color
+            element.style.color = '#4B5563'; // Tailwind gray-700
+
+            function type() {
+                if (i < text.length) {
+                    const char = text.charAt(i);
+
+                    // 1. Play sound for non-space characters
+                    if (char !== ' ' && char !== '\n' && char !== '\r') {
+                        playTypeSound();
+                    }
+
+                    if (char === '\n') {
+                        // Use <br> for line breaks within the pre-wrap styled block
+                        element.innerHTML += '<br>';
+                    } else {
+                        element.innerHTML += char;
+                    }
+                    i++;
+                    setTimeout(type, delay);
+                } else {
+                    // Typing finished, remove cursor after a short delay
+                    setTimeout(() => {
+                        cursor.remove();
+                        revealPingu(); // Reveal the photo after the typing is done!
+                    }, 500);
+                }
+            }
+            type();
+        }
+
+        /**
+         * Handles the card click event.
+         */
+        function openCard() {
+            if (isCardOpen) {
+                return;
+            }
+
+            // Audio must be initialized on a user-driven event
+            initAudio();
+            isCardOpen = true;
+
+            // 1. Add the flip class to the container
+            cardContainer.classList.add('is-open');
+
+            // 2. Start the typewriter effect after the card flip animation is complete (1.2s + 0.3s buffer)
+            setTimeout(() => {
+                // Remove existing content to ensure a clean start for the typewriter
+                letterContentElement.innerHTML = ''; 
+                typeWriter(letterText.trim(), letterContentElement, 40); // 40ms delay per char
+            }, 1500); 
+
+            // Prevent re-triggering
+            cardContainer.onclick = null;
+        }
+
+        // Message Box functions (for completeness)
+        const messageBox = document.getElementById('messageBox');
+        const messageText = document.getElementById('messageText');
+        function showMessageBox(message) {
+            messageText.textContent = message;
+            messageBox.classList.remove('hidden');
+            messageBox.classList.add('flex');
+        }
+        function hideMessageBox() {
+            messageBox.classList.add('hidden');
+            messageBox.classList.remove('flex');
+        }
+
+        window.onload = function() {
+            console.log("Website loaded. Click the card to start the surprise!");
+        };
+
+    </script>
+</body>
+</html>
